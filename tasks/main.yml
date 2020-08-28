@@ -1,0 +1,30 @@
+---
+# tasks file for bootstrap-raspberrypi
+## This task will require to have install netaddr in the local Ansible control node
+- name: Attempt to resolve `raspberrypi.local` via mDNS in multicast space.
+  delegate_to: localhost
+  command: dig raspberrypi.local +short
+  register: raspi_host
+  changed_when:
+    - raspi_host.stdout_lines | length > 0
+
+- name: Assert the above result is an IPv4|6 address
+  assert:
+    that: raspi_host.stdout | ipaddr
+  when:
+    - raspi_host.stdout_lines | length > 0
+
+- name: Ask user which host to change this new discovered raspi
+  pause:
+    prompt: "Looks like we have identified a RaspberryPI host listening on {{ raspi_host.stdout }}. What's the ansible_host we want to associate it with?"
+  when:
+    - raspi_host.stdout_lines | length > 0
+
+- name: Add host to raspberry_pi groups for further configuration
+  add_host:
+    hostname: raspberrypi
+    groups:
+      - raspberry_pi
+    ansible_host:
+  when:
+    - raspi_host.stdout_lines | length > 0
