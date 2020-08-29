@@ -1,30 +1,77 @@
 ---
-# tasks file for bootstrap-raspberrypi
-## This task will require to have install netaddr in the local Ansible control node
-- name: Attempt to resolve `raspberrypi.local` via mDNS in multicast space.
-  delegate_to: localhost
-  command: dig raspberrypi.local +short
-  register: raspi_host
-  changed_when:
-    - raspi_host.stdout_lines | length > 0
+# tasks file for bootstrap-rpi
+- block:
+    - name: Check if connection against {{ ansible_host }} is possible
+      command: >
+        ssh -o StrictHostKeyChecking=no -o User={{ ansible_user }} 
+        -o ConnectTimeout=5 -o PreferredAuthentications=publickey 
+        -o PubkeyAuthentication=yes -i {{ ansible_ssh_private_key_file}}
+        {{ ansible_host }}
+      connection: local
+      changed_when: False
+  rescue:
+    - name: Amend local connectivity for first SSH connection to the RaspberryPi
+      #connection: local
+      set_fact:
+        ansible_user: "{{ first_bootstrap_user }}"
+        ansible_ssh_pass: "{{ first_bootstrap_password }}"
+        ansible_become: yes
+        ansible_become_user: root
 
-- name: Assert the above result is an IPv4|6 address
-  assert:
-    that: raspi_host.stdout | ipaddr
-  when:
-    - raspi_host.stdout_lines | length > 0
+    - name: "Create {{ bootstrap_user }} user for provisioning"
+      user:
+        name: "{{ bootstrap_user }}"
+        comment: Default provisioning user for automations
+    
+    - name: "Add {{ bootstrap_user }} to sudoers"
+      copy:
+        dest: "/etc/sudoers.d/{{ bootstrap_user }}"
+        content: "{{ bootstrap_user }} ALL=(ALL) NOPASSWD: ALL"
+        mode: 0600
 
-- name: Ask user which host to change this new discovered raspi
-  pause:
-    prompt: "Looks like we have identified a RaspberryPI host listening on {{ raspi_host.stdout }}. What's the ansible_host we want to associate it with?"
-  when:
-    - raspi_host.stdout_lines | length > 0
+    - name: "Add SSH Public Key to {{ bootstrap_user }}" 
+      authorized_key: 
+        user: "{{ bootstrap_user }}"
+        key: "{{ lookup('file', ansible_ssh_public_key) }}"
+        state: present
 
-- name: Add host to raspberry_pi groups for further configuration
-  add_host:
-    hostname: raspberrypi
-    groups:
-      - raspberry_pi
-    ansible_host:
-  when:
-    - raspi_host.stdout_lines | length > 0
+    - name: Disable Password Authentication
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: "PasswordAuthentication no"
+        state: present
+        backup: yes
+
+    - name: Disable Root Login
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: "PermitRootLogin no"
+        state: present
+        backup: yes
+
+    - name: Restart SSHd service
+      service:
+        name: sshd
+        state: restarted
+    
+    - name: reset ssh connection
+      meta: reset_connection
+
+    - name: Amend local connectivity for first SSH connection to the RaspberryPi
+      #connection: local
+      set_fact:
+        ansible_user: "{{ bootstrap_user }}"
+        ansible_ssh_pass: ""
+
+    - name: Delete the `pi` Linux user
+      user:
+        name: "{{ first_bootstrap_user }}"
+        state: absent
+        force: yes
+
+    - name: Delete the home directory of pi user
+      file:
+        path: "/home/{{ first_bootstrap_user }}"
+        state: absent

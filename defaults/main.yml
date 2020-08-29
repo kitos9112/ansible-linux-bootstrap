@@ -1,2 +1,11 @@
 ---
-# defaults file for bootstrap-raspberrypi
+# Linux user utilised for provisioning purposes
+ansible_user: ansible
+# [aux] Linux user utilised for provisioning purposes
+bootstrap_user: ansible
+# RSA Private key for provisioning with the {{ ansible_user }}
+ansible_ssh_private_key_file: ~/.ssh/id_rsa
+# Default raspbian user
+first_bootstrap_user: pi
+# Default raspbian password
+first_bootstrap_password: raspberry
