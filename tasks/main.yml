@@ -1,77 +1,36 @@
 ---
-# tasks file for bootstrap-rpi
+# tasks file for bootstrap-rpi.yml
 - block:
-    - name: Check if connection against {{ ansible_host }} is possible
+    - name: Check if connection against host is possible
       command: >
         ssh -o StrictHostKeyChecking=no -o User={{ ansible_user }} 
         -o ConnectTimeout=5 -o PreferredAuthentications=publickey 
         -o PubkeyAuthentication=yes -i {{ ansible_ssh_private_key_file}}
-        {{ ansible_host }}
+        -p {{ ansible_port }} {{ ansible_host }}
       connection: local
+      ignore_errors: false
       changed_when: False
+
+    - include: bootstrap-rpi.yml
+      vars:
+        ansible_become: yes
+      when: force_bootstrap |bool
   rescue:
+    - name: Ask the user whether they want to force a bootstrap as it seems the SSH fingerprint has changed since previous execution
+      pause:
+        prompt: "This might look odd - Are you setting up a new device? - Security advise: cancel this operation if not. Otherwise, press any key"
+
+    - name: Remove SSH Fingerprint from known_hosts
+      ignore_errors: true
+      delegate_to: localhost
+      shell: "ssh-keygen -f ~/.ssh/known_hosts -R {{ ansible_host }}"
+
     - name: Amend local connectivity for first SSH connection to the RaspberryPi
-      #connection: local
       set_fact:
         ansible_user: "{{ first_bootstrap_user }}"
+        bootstrap_user: "{{ bootstrap_user }}"
         ansible_ssh_pass: "{{ first_bootstrap_password }}"
         ansible_become: yes
         ansible_become_user: root
 
-    - name: "Create {{ bootstrap_user }} user for provisioning"
-      user:
-        name: "{{ bootstrap_user }}"
-        comment: Default provisioning user for automations
-    
-    - name: "Add {{ bootstrap_user }} to sudoers"
-      copy:
-        dest: "/etc/sudoers.d/{{ bootstrap_user }}"
-        content: "{{ bootstrap_user }} ALL=(ALL) NOPASSWD: ALL"
-        mode: 0600
-
-    - name: "Add SSH Public Key to {{ bootstrap_user }}" 
-      authorized_key: 
-        user: "{{ bootstrap_user }}"
-        key: "{{ lookup('file', ansible_ssh_public_key) }}"
-        state: present
-
-    - name: Disable Password Authentication
-      lineinfile:
-        dest: /etc/ssh/sshd_config
-        regexp: '^PasswordAuthentication'
-        line: "PasswordAuthentication no"
-        state: present
-        backup: yes
-
-    - name: Disable Root Login
-      lineinfile:
-        dest: /etc/ssh/sshd_config
-        regexp: '^PermitRootLogin'
-        line: "PermitRootLogin no"
-        state: present
-        backup: yes
-
-    - name: Restart SSHd service
-      service:
-        name: sshd
-        state: restarted
-    
-    - name: reset ssh connection
-      meta: reset_connection
-
-    - name: Amend local connectivity for first SSH connection to the RaspberryPi
-      #connection: local
-      set_fact:
-        ansible_user: "{{ bootstrap_user }}"
-        ansible_ssh_pass: ""
-
-    - name: Delete the `pi` Linux user
-      user:
-        name: "{{ first_bootstrap_user }}"
-        state: absent
-        force: yes
-
-    - name: Delete the home directory of pi user
-      file:
-        path: "/home/{{ first_bootstrap_user }}"
-        state: absent
+    - include: bootstrap-rpi.yml

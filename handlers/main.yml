@@ -1,2 +1,7 @@
 ---
-# handlers file for bootstrap-rpi
+# handlers file for raspi_bootstrap
+- name: Restart SSHd service
+  service:
+    name: sshd
+    state: restarted
+    enabled: yes
