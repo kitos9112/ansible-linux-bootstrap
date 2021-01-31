@@ -1,5 +1,3 @@
-
-
 - name: "Create {{ bootstrap_user }} user for provisioning"
   user:
     name: "{{ bootstrap_user }}"
@@ -17,8 +15,8 @@
     content: "sudo ALL=(ALL) NOPASSWD: ALL"
     mode: 0600
 
-- name: "Add SSH Public Key to {{ bootstrap_user }}" 
-  authorized_key: 
+- name: "Add SSH Public Key to {{ bootstrap_user }}"
+  authorized_key:
     user: "{{ bootstrap_user }}"
     key: "{{ lookup('file', ansible_ssh_public_key) }}"
     state: present
@@ -26,7 +24,7 @@
 - name: Disable Password Authentication
   lineinfile:
     dest: /etc/ssh/sshd_config
-    regexp: '^PasswordAuthentication'
+    regexp: "^PasswordAuthentication"
     line: "PasswordAuthentication no"
     state: present
     backup: yes
@@ -35,7 +33,7 @@
 - name: Disable Root Login
   lineinfile:
     dest: /etc/ssh/sshd_config
-    regexp: '^PermitRootLogin'
+    regexp: "^PermitRootLogin"
     line: "PermitRootLogin no"
     state: present
     backup: yes
