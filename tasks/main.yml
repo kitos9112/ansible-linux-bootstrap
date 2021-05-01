@@ -1,13 +1,24 @@
 ---
 # tasks file for bootstrap-rpi.yml
 - block:
-    - name: Check if connection against host is possible
-      command: >
-        ssh -o StrictHostKeyChecking=no -o User={{ ansible_user }}
+    - debug:
+        msg: "ssh -o StrictHostKeyChecking=no
+        -o User={{ ansible_user }}
         -o ConnectTimeout=5 -o PreferredAuthentications=publickey
         -o PubkeyAuthentication=yes -i {{ ansible_ssh_private_key_file }}
+        -p {{ ansible_port }} {{ ansible_host }}"
+
+    - name: Check if connection against host is possible
+      ansible.builtin.command: >
+        ssh 
+        -o StrictHostKeyChecking=no
+        -o User={{ ansible_user }}
+        -o ConnectTimeout=5
+        -o PreferredAuthentications=publickey
+        -o PubkeyAuthentication=yes
+        -i {{ ansible_ssh_private_key_file }}
         -p {{ ansible_port }} {{ ansible_host }}
-      connection: local
+      delegate_to: localhost
       ignore_errors: false
       changed_when: False
 
