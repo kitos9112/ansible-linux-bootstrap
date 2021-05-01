@@ -10,4 +10,3 @@ first_bootstrap_user: pi
 # Default raspbian password
 first_bootstrap_password: raspberry
 # Re-run first bootstrap steps
-

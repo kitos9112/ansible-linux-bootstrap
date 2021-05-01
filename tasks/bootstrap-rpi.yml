@@ -27,7 +27,7 @@
     regexp: "^PasswordAuthentication"
     line: "PasswordAuthentication no"
     state: present
-    backup: yes
+    backup: true
   notify: Restart SSHd service
 
 - name: Disable Root Login
@@ -36,7 +36,7 @@
     regexp: "^PermitRootLogin"
     line: "PermitRootLogin no"
     state: present
-    backup: yes
+    backup: true
   notify: Restart SSHd service
 
 - name: Reset ssh connection for testing connectivity
@@ -51,7 +51,7 @@
   user:
     name: "{{ first_bootstrap_user }}"
     state: absent
-    force: yes
+    force: true
 
 - name: "Delete the home directory of `{{ first_bootstrap_user }}` user"
   file:

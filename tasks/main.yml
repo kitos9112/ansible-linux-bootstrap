@@ -1,7 +1,9 @@
 ---
 # tasks file for bootstrap-rpi.yml
-- block:
-    - debug:
+- name: Main block of tasks
+  block:
+    - name: Debug SSH Command
+      debug:
         msg: "ssh -o StrictHostKeyChecking=no
         -o User={{ ansible_user }}
         -o ConnectTimeout=5 -o PreferredAuthentications=publickey
@@ -10,7 +12,7 @@
 
     - name: Check if connection against host is possible
       ansible.builtin.command: >
-        ssh 
+        ssh
         -o StrictHostKeyChecking=no
         -o User={{ ansible_user }}
         -o ConnectTimeout=5
@@ -20,11 +22,11 @@
         -p {{ ansible_port }} {{ ansible_host }}
       delegate_to: localhost
       ignore_errors: false
-      changed_when: False
+      changed_when: false
 
     - include: bootstrap-rpi.yml
       vars:
-        ansible_become: yes
+        ansible_become: true
       when: force_bootstrap |bool
   rescue:
     - name: Ask the user whether they want to force a bootstrap as it seems the SSH fingerprint has changed since previous execution
@@ -48,7 +50,7 @@
         ansible_user: "{{ first_bootstrap_user }}"
         bootstrap_user: "{{ bootstrap_user }}"
         ansible_ssh_pass: "{{ first_bootstrap_password }}"
-        ansible_become: yes
+        ansible_become: true
         ansible_become_user: root
 
     - include: bootstrap-rpi.yml
