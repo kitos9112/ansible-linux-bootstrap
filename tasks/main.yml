@@ -2,17 +2,9 @@
 # tasks file for bootstrap-rpi.yml
 - name: Main block of tasks
   block:
-    - name: Debug SSH Command
-      debug:
-        msg: "ssh -o StrictHostKeyChecking=no
-        -o User={{ ansible_user }}
-        -o ConnectTimeout=5 -o PreferredAuthentications=publickey
-        -o PubkeyAuthentication=yes -i {{ ansible_ssh_private_key_file }}
-        -p {{ ansible_port }} {{ ansible_host }}"
-
     - name: Check if connection against host is possible
-      ansible.builtin.command: >
-        ssh
+      ansible.builtin.raw: >
+        /usr/bin/ssh
         -o StrictHostKeyChecking=no
         -o User={{ ansible_user }}
         -o ConnectTimeout=5
@@ -20,37 +12,59 @@
         -o PubkeyAuthentication=yes
         -i {{ ansible_ssh_private_key_file }}
         -p {{ ansible_port }} {{ ansible_host }}
+      vars:
+        ansible_become: false
       delegate_to: localhost
-      ignore_errors: false
       changed_when: false
 
-    - include: bootstrap-rpi.yml
+    - ansible.builtin.include_tasks: bootstrap.yml
       vars:
         ansible_become: true
       when: force_bootstrap |bool
+
   rescue:
     - name: Ask the user whether they want to force a bootstrap as it seems the SSH fingerprint has changed since previous execution
-      pause:
+      ansible.builtin.pause:
         prompt: "This might look odd - Are you setting up a new device? - Security advise: cancel this operation if not. Otherwise, press any key"
+
+    - name: Gather localhost facts
+      delegate_to: localhost
+      vars:
+        ansible_become: false
+      ansible.builtin.setup:
 
     - name: Remove SSH Fingerprint from known_hosts
       delegate_to: localhost
+      vars:
+        ansible_become: false
       delegate_facts: true
       ansible.builtin.known_hosts:
         name: "{{ item }}"
         state: absent
         path: "{{ ansible_env.HOME }}/.ssh/known_hosts"
       loop:
-        - "{{ raspi_config_hostname }}"
+        - "{{ hostname }}"
         - "{{ ansible_host }}"
-        - "{{ raspi_config_hostname.split('.')[0] }}"
+        - "{{ hostname.split('.')[0] }}"
 
-    - name: Amend local connectivity for first SSH connection to the RaspberryPi
-      set_fact:
+    - name: Amend local connectivity for first SSH connection to the host
+      ansible.builtin.set_fact:
         ansible_user: "{{ first_bootstrap_user }}"
         bootstrap_user: "{{ bootstrap_user }}"
         ansible_ssh_pass: "{{ first_bootstrap_password }}"
         ansible_become: true
         ansible_become_user: root
 
-    - include: bootstrap-rpi.yml
+    - ansible.builtin.include_tasks: bootstrap.yml
+
+- name: Make sure the host gets bootstrap-ed
+  ansible.builtin.include_role:
+    name: robertdebock.bootstrap
+
+- name: Instal Ansible core dependencies after bootstrap-ing
+  ansible.builtin.include_role:
+    name: robertdebock.core_dependencies
+
+- name: "Update Linux host via {{ ansible_pkg_mgr | upper }}"
+  ansible.builtin.include_role:
+    name: robertdebock.update

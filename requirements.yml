@@ -1,0 +1,11 @@
+# Collections list
+collections:
+  - ansible.posix
+
+roles:
+  # https://github.com/robertdebock/ansible-role-bootstrap
+  - name: robertdebock.bootstrap
+  # https://github.com/robertdebock/ansible-role-update
+  - name: robertdebock.update
+  # https://github.com/robertdebock/ansible-role-core_dependencies
+  - name: robertdebock.core_dependencies

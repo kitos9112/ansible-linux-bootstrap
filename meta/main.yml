@@ -1,10 +1,15 @@
 ---
 galaxy_info:
   author: Marcos Soutullo Rodriguez
-  description: This Ansible role bootstraps a Raspberry Pi device from scratch as it comes from a fresh RaspberryPi OS installation
-  license: "BSD-3-Clause (default)"
-  min_ansible_version: 2.9
+  description: This Ansible role bootstraps an SSH-reachable Linux host from its default settings so that it can get managed by Ansible
+  company: None
+  license: "MIT"
+  min_ansible_version: "2.12"
   platforms:
-    - name: RaspberryPiOS
+    - name: Debian
       versions:
-        - buster
+        - bullseye
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy

@@ -5,8 +5,11 @@ ansible_user: ansible
 bootstrap_user: ansible
 # RSA Private key for provisioning with the {{ ansible_user }}
 ansible_ssh_private_key_file: ~/.ssh/id_rsa
-# Default raspbian user
+# Default raspberryOS user
 first_bootstrap_user: pi
-# Default raspbian password
+# Default raspberryOS password
 first_bootstrap_password: raspberry
 # Re-run first bootstrap steps
+force_bootstrap: false
+# Default Enabled bootstrap Password to properly configure headless
+first_bootstrap_enable_password: null

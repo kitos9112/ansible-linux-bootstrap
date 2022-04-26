@@ -1,8 +1,9 @@
 RaspberryPi Bootstrap
 =========
 
-This Ansible role is capable of bootstraping your default RaspberryPi OS installation by running a set of default tasks.
-It will configure your RaspberryPi device to later be properly configured.
+This Ansible role is capable of `bootstraping` your default RaspberryOS and/or modern Linux distribution installation by running a set of default tasks.
+
+In essence, It will configure your Linux host to be managed by Ansible.
 
 Requirements
 ------------

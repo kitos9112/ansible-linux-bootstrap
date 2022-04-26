@@ -1,28 +1,42 @@
+---
+- name: "Amend the current ansible connection user to become superuser"
+  become: true
+  vars:
+    ansible_become_password: "{{ first_bootstrap_enable_password }}"
+  community.general.sudoers:
+    name: allowLinuxBootstrap
+    state: present
+    user: "{{ first_bootstrap_user }}"
+    commands: ALL
+
+- name: Reset ssh connection to load latest sudoers changes
+  ansible.builtin.meta: reset_connection
+
 - name: "Create {{ bootstrap_user }} user for provisioning"
-  user:
+  ansible.builtin.user:
     name: "{{ bootstrap_user }}"
     comment: Default provisioning user for automations
 
 - name: "Add {{ bootstrap_user }} to sudoers"
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/sudoers.d/{{ bootstrap_user }}"
     content: "{{ bootstrap_user }} ALL=(ALL) NOPASSWD: ALL"
     mode: 0600
 
 - name: "Add sudo group to sudoers"
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/sudoers.d/sudo"
     content: "sudo ALL=(ALL) NOPASSWD: ALL"
     mode: 0600
 
 - name: "Add SSH Public Key to {{ bootstrap_user }}"
-  authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ bootstrap_user }}"
     key: "{{ lookup('file', ansible_ssh_public_key) }}"
     state: present
 
 - name: Disable Password Authentication
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config
     regexp: "^PasswordAuthentication"
     line: "PasswordAuthentication no"
@@ -31,7 +45,7 @@
   notify: Restart SSHd service
 
 - name: Disable Root Login
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config
     regexp: "^PermitRootLogin"
     line: "PermitRootLogin no"
@@ -40,26 +54,26 @@
   notify: Restart SSHd service
 
 - name: Reset ssh connection for testing connectivity
-  meta: reset_connection
+  ansible.builtin.meta: reset_connection
 
 - name: Amend local connectivity for first SSH connection to the RaspberryPi
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_user: "{{ bootstrap_user }}"
     ansible_ssh_pass: ""
 
 - name: "Delete the `{{ first_bootstrap_user }}` Linux user"
-  user:
+  ansible.builtin.user:
     name: "{{ first_bootstrap_user }}"
     state: absent
     force: true
 
 - name: "Delete the home directory of `{{ first_bootstrap_user }}` user"
-  file:
+  ansible.builtin.file:
     path: "/home/{{ first_bootstrap_user }}"
     state: absent
 
 - name: Ensure sudo and docker groups exist
-  group:
+  ansible.builtin.group:
     name: "{{ item }}"
   loop:
     - sudo
