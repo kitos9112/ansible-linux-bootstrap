@@ -13,3 +13,5 @@ first_bootstrap_password: raspberry
 force_bootstrap: false
 # Default Enabled bootstrap Password to properly configure headless
 first_bootstrap_enable_password: null
+# Default: Do not enable Wake-On-Lan
+enable_wake_on_lan: false

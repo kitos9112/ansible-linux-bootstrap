@@ -68,3 +68,8 @@
 - name: "Update Linux host via {{ ansible_pkg_mgr | upper }}"
   ansible.builtin.include_role:
     name: robertdebock.update
+
+- ansible.builtin.include_tasks: wake_on_lan.yml
+  vars:
+    ansible_become: true
+  when: enable_wake_on_lan |bool

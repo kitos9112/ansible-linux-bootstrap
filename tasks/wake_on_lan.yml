@@ -1,0 +1,19 @@
+---
+- name: Install ethtool in the device
+  ansible.builtin.package:
+    name: ethtool
+    state: present
+
+- name: Copy wol.service file to {{ ansible_host }}
+  ansible.builtin.template:
+    src: wol.service
+    dest: /etc/systemd/system
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Start Wake-on-Lan oneShot Service
+  ansible.builtin.service:
+    name: wol.service
+    state: started
+    enabled: true
