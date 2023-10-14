@@ -61,20 +61,19 @@
     ansible_user: "{{ bootstrap_user }}"
     ansible_ssh_pass: ""
 
-- name: "Delete the `{{ first_bootstrap_user }}` Linux user"
-  ansible.builtin.user:
-    name: "{{ first_bootstrap_user }}"
-    state: absent
-    force: true
-
-- name: "Delete the home directory of `{{ first_bootstrap_user }}` user"
-  ansible.builtin.file:
-    path: "/home/{{ first_bootstrap_user }}"
-    state: absent
-
 - name: Ensure sudo and docker groups exist
   ansible.builtin.group:
     name: "{{ item }}"
   loop:
     - sudo
     - docker
+
+- name: "Delete the home directory of `{{ first_bootstrap_user }}` user"
+  ansible.builtin.file:
+    path: "/home/{{ first_bootstrap_user }}"
+    state: absent
+
+- name: "Delete the `{{ first_bootstrap_user }}` Linux user"
+  ansible.builtin.user:
+    name: "{{ first_bootstrap_user }}"
+    state: absent
