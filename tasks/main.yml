@@ -17,6 +17,15 @@
       delegate_to: localhost
       changed_when: false
 
+    - name: Set bootstrap facts
+      ansible.builtin.set_fact:
+        ansible_user: "{{ first_bootstrap_user }}"
+        bootstrap_user: "{{ bootstrap_user }}"
+        ansible_ssh_pass: "{{ first_bootstrap_password }}"
+        ansible_become: true
+        ansible_become_user: root
+      when: force_bootstrap |bool
+
     - ansible.builtin.include_tasks: bootstrap.yml
       vars:
         ansible_become: true
